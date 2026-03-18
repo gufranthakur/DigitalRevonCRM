@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Invoice — AdCRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'DM Sans', sans-serif; }
+        body { background-color: #0a0a0a; }
+        .sidebar { background: #111111; border-right: 1px solid #1a1a1a; transition: width 0.3s ease; width: 240px; }
+        .sidebar.collapsed { width: 64px; }
+        .sidebar.collapsed .nav-label, .sidebar.collapsed .logo-text { display: none; }
+        .nav-item { color: #525252; transition: color 0.2s, background 0.2s; border-radius: 8px; }
+        .nav-item:hover { color: #e5e5e5; background: #1a1a1a; }
+        .nav-item.active { color: #10b981; background: rgba(16,185,129,0.08); }
+        .card { background: #111111; border: 1px solid #1a1a1a; border-radius: 16px; }
+        .logo-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 12px rgba(16,185,129,0.6); }
+        .topbar { background: #0a0a0a; border-bottom: 1px solid #1a1a1a; }
+        .input-field { background: #0a0a0a; border: 1px solid #242424; color: #e5e5e5; transition: border-color 0.2s; }
+        .input-field:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+        .input-field::placeholder { color: #404040; }
+        .field-label { color: #525252; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
+        .mono { font-family: 'DM Mono', monospace; }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden text-white">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+
+<div class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="topbar flex items-center justify-between px-6 py-4">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="text-neutral-500 hover:text-white transition">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <a href="/invoices" class="text-neutral-500 hover:text-white text-sm transition">Invoices</a>
+            <span class="text-neutral-700">/</span>
+            <span class="text-neutral-400 text-sm">New Invoice</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-black text-xs font-bold">A</div>
+            <span class="text-neutral-400 text-sm">Admin</span>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-6">
+
+        <div class="mb-8">
+            <h1 class="text-white text-2xl font-semibold tracking-tight">New Invoice</h1>
+            <p class="text-neutral-500 text-sm mt-1">Create a new client invoice</p>
+        </div>
+
+        <form action="/invoices/save" method="post">
+
+            <!-- Top Section -->
+            <div class="grid grid-cols-3 gap-4 mb-4">
+
+                <!-- Client + Date -->
+                <div class="card p-6 col-span-2">
+                    <h2 class="text-white font-medium mb-5">Invoice Details</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="field-label block mb-2">Invoice Number</label>
+                            <input type="text"
+                                   th:value="${nextInvoiceNumber}"
+                                   class="input-field w-full rounded-lg px-4 py-2.5 text-sm mono"
+                                   readonly/>
+                        </div>
+                        <div>
+                            <label class="field-label block mb-2">Issue Date</label>
+                            <input type="date" name="issueDate"
+                                   class="input-field w-full rounded-lg px-4 py-2.5 text-sm"
+                                   required/>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="field-label block mb-2">Client</label>
+                            <select name="clientId" class="input-field w-full rounded-lg px-4 py-2.5 text-sm" required>
+                                <option value="" disabled selected>Select a client</option>
+                                <option th:each="client : ${clients}"
+                                        th:value="${client.id}"
+                                        th:text="${client.name} + ' — ' + ${client.projectName}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="card p-6 flex flex-col justify-between">
+                    <h2 class="text-white font-medium mb-5">Summary</h2>
+                    <div class="flex flex-col gap-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-neutral-500">Subtotal</span>
+                            <span class="text-white mono" id="summarySubtotal">₹0.00</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-neutral-500">GST (18%)</span>
+                            <span class="text-white mono" id="summaryGst">₹0.00</span>
+                        </div>
+                        <div class="border-t border-neutral-800 pt-3 flex justify-between">
+                            <span class="text-white font-medium">Total</span>
+                            <span class="text-emerald-400 font-semibold mono text-lg" id="summaryTotal">₹0.00</span>
+                        </div>
+                    </div>
+                    <button type="submit"
+                            class="mt-6 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-sm w-full py-2.5 rounded-lg transition">
+                        Save Invoice
+                    </button>
+                </div>
+            </div>
+
+            <!-- Line Items -->
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="text-white font-medium">Line Items</h2>
+                    <button type="button" onclick="addRow()"
+                            class="text-xs text-emerald-400 hover:text-emerald-300 border border-emerald-900 hover:border-emerald-700 px-3 py-1.5 rounded-lg transition">
+                        + Add Row
+                    </button>
+                </div>
+
+                <table class="w-full">
+                    <thead>
+                    <tr class="border-b border-neutral-800">
+                        <th class="text-left text-xs text-neutral-500 uppercase tracking-wider pb-3 pr-4">Description</th>
+                        <th class="text-left text-xs text-neutral-500 uppercase tracking-wider pb-3 pr-4 w-24">Qty</th>
+                        <th class="text-left text-xs text-neutral-500 uppercase tracking-wider pb-3 pr-4 w-36">Unit Price (₹)</th>
+                        <th class="text-left text-xs text-neutral-500 uppercase tracking-wider pb-3 w-36">Subtotal</th>
+                        <th class="w-10"></th>
+                    </tr>
+                    </thead>
+                    <tbody id="lineItemsBody">
+                    <!-- Row template injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+        </form>
+    </main>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    function addRow() {
+        const tbody = document.getElementById('lineItemsBody');
+        const row = document.createElement('tr');
+        row.className = 'border-b border-neutral-800/50';
+        row.innerHTML = `
+            <td class="py-3 pr-4">
+                <input type="text" name="descriptions"
+                       placeholder="e.g. Social Media Management"
+                       class="w-full bg-neutral-900 border border-neutral-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500"
+                       oninput="recalcRow(this)"/>
+            </td>
+            <td class="py-3 pr-4">
+                <input type="number" name="quantities" value="1" min="1"
+                       class="w-full bg-neutral-900 border border-neutral-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500"
+                       oninput="recalcRow(this)"/>
+            </td>
+            <td class="py-3 pr-4">
+                <input type="number" name="unitPrices" value="0" min="0" step="0.01"
+                       class="w-full bg-neutral-900 border border-neutral-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500"
+                       oninput="recalcRow(this)"/>
+            </td>
+            <td class="py-3 text-sm text-white mono row-subtotal">₹0.00</td>
+            <td class="py-3 text-center">
+                <button type="button" onclick="removeRow(this)"
+                        class="text-neutral-600 hover:text-red-400 transition text-lg leading-none">×</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+        recalcAll();
+    }
+
+    function removeRow(btn) {
+        btn.closest('tr').remove();
+        recalcAll();
+    }
+
+    function recalcRow(input) {
+        recalcAll();
+    }
+
+    function recalcAll() {
+        const rows = document.querySelectorAll('#lineItemsBody tr');
+        let subtotal = 0;
+        rows.forEach(row => {
+            const qty = parseFloat(row.querySelector('[name="quantities"]')?.value) || 0;
+            const price = parseFloat(row.querySelector('[name="unitPrices"]')?.value) || 0;
+            const rowSub = qty * price;
+            row.querySelector('.row-subtotal').textContent = '₹' + rowSub.toFixed(2);
+            subtotal += rowSub;
+        });
+        const gst = subtotal * 0.18;
+        const total = subtotal + gst;
+        document.getElementById('summarySubtotal').textContent = '₹' + subtotal.toFixed(2);
+        document.getElementById('summaryGst').textContent = '₹' + gst.toFixed(2);
+        document.getElementById('summaryTotal').textContent = '₹' + total.toFixed(2);
+    }
+
+    // Start with one row
+    addRow();
+</script>
+</body>
+</html>

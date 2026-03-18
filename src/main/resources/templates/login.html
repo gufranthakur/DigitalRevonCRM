@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM — Sign In</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'DM Sans', sans-serif; }
+
+        body {
+            background-color: #0a0a0a;
+            background-image:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 185, 129, 0.08), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(16, 185, 129, 0.04), transparent);
+        }
+
+        .card {
+            background: #111111;
+            border: 1px solid #1f1f1f;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 32px 64px rgba(0,0,0,0.6);
+        }
+
+        .input-field {
+            background: #0a0a0a;
+            border: 1px solid #242424;
+            color: #e5e5e5;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .input-field::placeholder { color: #404040; }
+
+        .btn-primary {
+            background: #10b981;
+            color: #000;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: #34d399;
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.35);
+        }
+
+        .btn-primary:active { transform: scale(0.99); }
+
+        .label { color: #525252; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; }
+
+        .divider { border-color: #1a1a1a; }
+
+        .logo-dot {
+            width: 8px; height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+            50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.9); }
+        }
+
+        .grid-bg {
+            background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .error-box {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .mono { font-family: 'DM Mono', monospace; }
+    </style>
+</head>
+<body class="min-h-screen grid-bg flex items-center justify-center p-4">
+
+<div class="w-full max-w-sm fade-in">
+
+    <!-- Logo -->
+    <div class="flex items-center gap-3 mb-10">
+        <div class="logo-dot"></div>
+        <span class="text-white font-semibold tracking-tight text-lg">AdCRM</span>
+        <span class="mono text-xs text-neutral-600 ml-auto">v1.0</span>
+    </div>
+
+    <!-- Card -->
+    <div class="card rounded-2xl p-8">
+
+        <div class="mb-8">
+            <h1 class="text-white text-2xl font-semibold tracking-tight mb-1">Welcome back</h1>
+            <p class="text-neutral-500 text-sm">Sign in to your dashboard</p>
+        </div>
+
+        <!-- Error -->
+        <div th:if="${error}" class="error-box rounded-lg px-4 py-3 mb-6 text-sm flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Invalid email or password
+        </div>
+
+        <form action="/login" method="post">
+
+
+            <!-- Email -->
+            <div class="mb-5">
+                <label class="label block mb-2">Email</label>
+                <input
+                        type="email"
+                        name="username"
+                        placeholder="admin@agency.com"
+                        class="input-field w-full rounded-lg px-4 py-3 text-sm"
+                />
+            </div>
+
+            <!-- Password -->
+            <div class="mb-7">
+                <label class="label block mb-2">Password</label>
+                <input
+                        type="password"
+                        name="password"
+                        placeholder="••••••••"
+                        class="input-field w-full rounded-lg px-4 py-3 text-sm"
+                />
+            </div>
+
+            <button type="submit" class="btn-primary w-full rounded-lg py-3 text-sm">
+                Sign in
+            </button>
+        </form>
+    </div>
+
+    <!-- Footer -->
+    <p class="text-center text-neutral-700 text-xs mt-6">
+        Internal use only &mdash; Real Estate Marketing Agency
+    </p>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoices — AdCRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'DM Sans', sans-serif; }
+        body { background-color: #0a0a0a; }
+        .sidebar { background: #111111; border-right: 1px solid #1a1a1a; transition: width 0.3s ease; width: 240px; }
+        .sidebar.collapsed { width: 64px; }
+        .sidebar.collapsed .nav-label, .sidebar.collapsed .logo-text { display: none; }
+        .nav-item { color: #525252; transition: color 0.2s, background 0.2s; border-radius: 8px; }
+        .nav-item:hover { color: #e5e5e5; background: #1a1a1a; }
+        .nav-item.active { color: #10b981; background: rgba(16,185,129,0.08); }
+        .card { background: #111111; border: 1px solid #1a1a1a; border-radius: 16px; }
+        .logo-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 12px rgba(16,185,129,0.6); }
+        .topbar { background: #0a0a0a; border-bottom: 1px solid #1a1a1a; }
+        .table-row { border-bottom: 1px solid #1a1a1a; transition: background 0.15s; }
+        .table-row:hover { background: #161616; }
+        .badge-paid { background: rgba(16,185,129,0.1); color: #10b981; }
+        .badge-unpaid { background: rgba(239,68,68,0.1); color: #ef4444; }
+        .mono { font-family: 'DM Mono', monospace; }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden text-white">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+
+<div class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="topbar flex items-center justify-between px-6 py-4">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="text-neutral-500 hover:text-white transition">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <span class="text-neutral-400 text-sm">Invoices</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-black text-xs font-bold">A</div>
+            <span class="text-neutral-400 text-sm">Admin</span>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-6">
+
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-white text-2xl font-semibold tracking-tight">Invoices</h1>
+                <p class="text-neutral-500 text-sm mt-1">Manage and track client invoices</p>
+            </div>
+            <a href="/invoices/new"
+               class="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-sm px-4 py-2 rounded-lg transition">
+                + New Invoice
+            </a>
+        </div>
+
+        <div class="card overflow-hidden">
+            <table class="w-full">
+                <thead>
+                <tr class="border-b border-neutral-800">
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Invoice #</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Client</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Issue Date</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Amount</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">GST</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Status</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="invoice : ${invoices}" class="table-row">
+                    <td class="px-5 py-4 text-sm mono text-neutral-300" th:text="${invoice.invoiceNumber}"></td>
+                    <td class="px-5 py-4 text-sm text-white" th:text="${invoice.client.name}"></td>
+                    <td class="px-5 py-4 text-sm text-neutral-400" th:text="${invoice.issueDate}"></td>
+                    <td class="px-5 py-4 text-sm text-white font-medium" th:text="'₹' + ${#numbers.formatDecimal(invoice.totalAmount, 1, 2)}"></td>
+                    <td class="px-5 py-4 text-sm text-neutral-400" th:text="'₹' + ${#numbers.formatDecimal(invoice.gstAmount, 1, 2)}"></td>
+                    <td class="px-5 py-4">
+                        <span th:classappend="${invoice.status == T(com.prototype.model.Invoice.Status).PAID} ? 'badge-paid' : 'badge-unpaid'"
+                              class="text-xs font-medium px-2.5 py-1 rounded-full"
+                              th:text="${invoice.status}">
+                        </span>
+                    </td>
+                    <td class="px-5 py-4">
+                        <form th:action="@{/invoices/{id}/toggle-status(id=${invoice.id})}" method="post">
+                            <button type="submit"
+                                    th:text="${invoice.status == T(com.prototype.model.Invoice.Status).PAID} ? 'Mark Unpaid' : 'Mark Paid'"
+                                    class="text-xs text-neutral-400 hover:text-white border border-neutral-700 hover:border-neutral-500 px-3 py-1.5 rounded-lg transition">
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(invoices)}">
+                    <td colspan="7" class="px-5 py-12 text-center text-neutral-600 text-sm">No invoices yet. Create your first invoice.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+</script>
+</body>
+</html>

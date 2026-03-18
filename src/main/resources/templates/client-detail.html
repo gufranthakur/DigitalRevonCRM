@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Detail — AdCRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'DM Sans', sans-serif; }
+        body { background-color: #0a0a0a; }
+        .sidebar { background: #111111; border-right: 1px solid #1a1a1a; transition: width 0.3s ease; width: 240px; }
+        .sidebar.collapsed { width: 64px; }
+        .sidebar.collapsed .nav-label, .sidebar.collapsed .logo-text { display: none; }
+        .nav-item { color: #525252; transition: color 0.2s, background 0.2s; border-radius: 8px; }
+        .nav-item:hover { color: #e5e5e5; background: #1a1a1a; }
+        .nav-item.active { color: #10b981; background: rgba(16,185,129,0.08); }
+        .card { background: #111111; border: 1px solid #1a1a1a; border-radius: 16px; }
+        .logo-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 12px rgba(16,185,129,0.6); }
+        .topbar { background: #0a0a0a; border-bottom: 1px solid #1a1a1a; }
+        .badge-active { background: rgba(16,185,129,0.1); color: #10b981; }
+        .badge-paused { background: rgba(234,179,8,0.1); color: #eab308; }
+        .badge-completed { background: rgba(107,114,128,0.1); color: #6b7280; }
+        .field-label { color: #525252; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
+        .field-value { color: #e5e5e5; font-size: 0.95rem; margin-top: 4px; }
+        .note-meeting  { background: rgba(59,130,246,0.1); color: #60a5fa; }
+        .note-strategy { background: rgba(168,85,247,0.1); color: #c084fc; }
+        .note-general  { background: rgba(107,114,128,0.1); color: #9ca3af; }
+        .input-field { background: #0a0a0a; border: 1px solid #242424; color: #e5e5e5; transition: border-color 0.2s; }
+        .input-field:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+        .input-field::placeholder { color: #404040; }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden text-white">
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+
+<div class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="topbar flex items-center justify-between px-6 py-4">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="text-neutral-500 hover:text-white transition">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <a href="/clients" class="text-neutral-500 hover:text-white text-sm transition">Clients</a>
+            <span class="text-neutral-700">/</span>
+            <span class="text-neutral-400 text-sm" th:text="${client.name}"></span>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-black text-xs font-bold">A</div>
+            <span class="text-neutral-400 text-sm">Admin</span>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-6">
+
+        <!-- Header -->
+        <div class="flex items-start justify-between mb-8">
+            <div>
+                <h1 class="text-white text-2xl font-semibold tracking-tight" th:text="${client.name}"></h1>
+                <p class="text-neutral-500 text-sm mt-1" th:text="${client.projectName}"></p>
+            </div>
+            <span th:classappend="${client.status == T(com.prototype.model.Client.Status).ACTIVE} ? 'badge-active' :
+                                      (${client.status == T(com.prototype.model.Client.Status).PAUSED} ? 'badge-paused' : 'badge-completed')"
+                  class="text-xs font-medium px-3 py-1.5 rounded-full"
+                  th:text="${client.status}">
+            </span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+
+            <!-- Client Info -->
+            <div class="card p-6 col-span-2">
+                <h2 class="text-white font-medium mb-6">Client Information</h2>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <p class="field-label">Client Name</p>
+                        <p class="field-value" th:text="${client.name}"></p>
+                    </div>
+                    <div>
+                        <p class="field-label">Project Name</p>
+                        <p class="field-value" th:text="${client.projectName}"></p>
+                    </div>
+                    <div>
+                        <p class="field-label">Contact Email</p>
+                        <p class="field-value" th:text="${client.contactEmail}"></p>
+                    </div>
+                    <div>
+                        <p class="field-label">Contact Phone</p>
+                        <p class="field-value" th:text="${client.contactPhone}"></p>
+                    </div>
+                    <div>
+                        <p class="field-label">Contract Start</p>
+                        <p class="field-value" th:text="${client.contractStart}"></p>
+                    </div>
+                    <div>
+                        <p class="field-label">Contract End</p>
+                        <p class="field-value" th:text="${client.contractEnd}"></p>
+                    </div>
+                    <div>
+                        <p class="field-label">Monthly Fee</p>
+                        <p class="field-value" th:text="'₹' + ${client.monthlyFee}"></p>
+                    </div>
+                    <div>
+                        <p class="field-label">Ad Budget</p>
+                        <p class="field-value" th:text="'₹' + ${client.adBudget}"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="flex flex-col gap-4">
+                <div class="card p-6">
+                    <p class="field-label mb-2">Monthly Fee</p>
+                    <p class="text-emerald-400 text-2xl font-semibold" th:text="'₹' + ${client.monthlyFee}"></p>
+                </div>
+                <div class="card p-6">
+                    <p class="field-label mb-2">Ad Budget</p>
+                    <p class="text-white text-2xl font-semibold" th:text="'₹' + ${client.adBudget}"></p>
+                </div>
+                <div class="card p-6">
+                    <p class="field-label mb-2">Contract End</p>
+                    <p class="text-white text-2xl font-semibold" th:text="${client.contractEnd}"></p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Notes Section -->
+        <div class="card p-6 mt-4">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-white font-medium">Notes</h2>
+                <button onclick="document.getElementById('addNoteForm').classList.toggle('hidden')"
+                        class="text-xs bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-3 py-1.5 rounded-lg transition">
+                    + Add Note
+                </button>
+            </div>
+
+            <!-- Add Note Form -->
+            <div id="addNoteForm" class="hidden mb-6 p-4 rounded-xl border border-neutral-800 bg-neutral-900">
+                <form th:action="@{/clients/{id}/notes(id=${client.id})}" method="post">
+                    <div class="mb-3">
+                        <label class="field-label block mb-2">Type</label>
+                        <select name="type" class="input-field w-full rounded-lg px-4 py-2.5 text-sm">
+                            <option value="GENERAL">General</option>
+                            <option value="MEETING">Meeting</option>
+                            <option value="STRATEGY">Strategy</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="field-label block mb-2">Content</label>
+                        <textarea name="content" rows="3"
+                                  placeholder="Write your note here..."
+                                  class="input-field w-full rounded-lg px-4 py-2.5 text-sm resize-none"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button"
+                                onclick="document.getElementById('addNoteForm').classList.add('hidden')"
+                                class="text-sm text-neutral-400 hover:text-white border border-neutral-700 px-4 py-2 rounded-lg transition">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-sm px-4 py-2 rounded-lg transition">
+                            Save Note
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Notes List -->
+            <div class="flex flex-col gap-3">
+                <div th:each="note : ${notes}" class="p-4 rounded-xl border border-neutral-800 bg-neutral-900">
+                    <div class="flex items-center justify-between mb-2">
+                        <span th:classappend="${note.type == T(com.prototype.model.Note.Type).MEETING} ? 'note-meeting' :
+                                              (${note.type == T(com.prototype.model.Note.Type).STRATEGY} ? 'note-strategy' : 'note-general')"
+                              class="text-xs font-medium px-2.5 py-1 rounded-full"
+                              th:text="${note.type}">
+                        </span>
+                        <span class="text-neutral-600 text-xs"
+                              th:text="${#temporals.format(note.createdAt, 'dd MMM yyyy, HH:mm')}">
+                        </span>
+                    </div>
+                    <p class="text-neutral-300 text-sm leading-relaxed" th:text="${note.content}"></p>
+                </div>
+
+                <p th:if="${#lists.isEmpty(notes)}" class="text-neutral-600 text-sm">No notes yet.</p>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+</body>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+</script>
+</html>

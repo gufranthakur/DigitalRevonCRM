@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clients — AdCRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'DM Sans', sans-serif; }
+        body { background-color: #0a0a0a; }
+        .sidebar { background: #111111; border-right: 1px solid #1a1a1a; transition: width 0.3s ease; width: 240px; }
+        .sidebar.collapsed { width: 64px; }
+        .sidebar.collapsed .nav-label, .sidebar.collapsed .logo-text { display: none; }
+        .nav-item { color: #525252; transition: color 0.2s, background 0.2s; border-radius: 8px; }
+        .nav-item:hover { color: #e5e5e5; background: #1a1a1a; }
+        .nav-item.active { color: #10b981; background: rgba(16,185,129,0.08); }
+        .card { background: #111111; border: 1px solid #1a1a1a; border-radius: 16px; }
+        .logo-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 12px rgba(16,185,129,0.6); }
+        .topbar { background: #0a0a0a; border-bottom: 1px solid #1a1a1a; }
+        .table-row { border-bottom: 1px solid #1a1a1a; transition: background 0.15s; }
+        .table-row:hover { background: #161616; }
+        .badge-active { background: rgba(16,185,129,0.1); color: #10b981; }
+        .badge-paused { background: rgba(234,179,8,0.1); color: #eab308; }
+        .badge-completed { background: rgba(107,114,128,0.1); color: #6b7280; }
+        .input-field { background: #0a0a0a; border: 1px solid #242424; color: #e5e5e5; transition: border-color 0.2s; }
+        .input-field:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+        .input-field::placeholder { color: #404040; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 50; align-items: center; justify-content: center; }
+        .modal.open { display: flex; }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden text-white">
+
+<!-- Sidebar -->
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+
+<!-- Main -->
+<div class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Topbar -->
+    <header class="topbar flex items-center justify-between px-6 py-4">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="text-neutral-500 hover:text-white transition">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <span class="text-neutral-400 text-sm">Clients</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-black text-xs font-bold">A</div>
+            <span class="text-neutral-400 text-sm">Admin</span>
+        </div>
+    </header>
+
+    <!-- Content -->
+    <main class="flex-1 overflow-y-auto p-6">
+
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-white text-2xl font-semibold tracking-tight">Clients</h1>
+                <p class="text-neutral-500 text-sm mt-1">Manage your agency clients</p>
+            </div>
+            <button onclick="document.getElementById('addModal').classList.add('open')"
+                    class="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-sm px-4 py-2 rounded-lg transition">
+                + Add Client
+            </button>
+        </div>
+
+        <!-- Table -->
+        <div class="card overflow-hidden">
+            <table class="w-full">
+                <thead>
+                <tr class="border-b border-neutral-800">
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Client</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Project</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Monthly Fee</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Ad Budget</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Status</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Contract End</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="client : ${clients}" class="table-row">
+                    <td class="px-5 py-4 text-sm text-white" th:text="${client.name}"></td>
+                    <td class="px-5 py-4 text-sm text-neutral-400" th:text="${client.projectName}"></td>
+                    <td class="px-5 py-4 text-sm text-neutral-400" th:text="'₹' + ${client.monthlyFee}"></td>
+                    <td class="px-5 py-4 text-sm text-neutral-400" th:text="'₹' + ${client.adBudget}"></td>
+                    <td class="px-5 py-4">
+                        <span th:classappend="${client.status == T(com.prototype.model.Client.Status).ACTIVE} ? 'badge-active' :
+                                              (${client.status == T(com.prototype.model.Client.Status).PAUSED} ? 'badge-paused' : 'badge-completed')"
+                              class="text-xs font-medium px-2.5 py-1 rounded-full"
+                              th:text="${client.status}">
+                        </span>
+                    </td>
+                    <td class="px-5 py-4 text-sm text-neutral-400" th:text="${client.contractEnd}"></td>
+                    <td class="px-5 py-4 flex items-center gap-2">
+                        <a th:href="@{/clients/{id}(id=${client.id})}"
+                           class="text-xs text-neutral-400 hover:text-white border border-neutral-700 hover:border-neutral-500 px-3 py-1.5 rounded-lg transition">
+                            View
+                        </a>
+                        <button type="button"
+                                th:data-id="${client.id}"
+                                th:data-name="${client.name}"
+                                th:data-project="${client.projectName}"
+                                th:data-email="${client.contactEmail}"
+                                th:data-phone="${client.contactPhone}"
+                                th:data-fee="${client.monthlyFee}"
+                                th:data-budget="${client.adBudget}"
+                                th:data-start="${client.contractStart}"
+                                th:data-end="${client.contractEnd}"
+                                th:data-status="${client.status}"
+                                onclick="openEditModal(this)"
+                                class="text-xs text-blue-400 hover:text-blue-300 border border-blue-900 hover:border-blue-700 px-3 py-1.5 rounded-lg transition">
+                            Edit
+                        </button>
+                        <form th:action="@{/clients/delete/{id}(id=${client.id})}" method="post">
+                            <button type="submit" class="text-xs text-red-500 hover:text-red-400 border border-red-900 hover:border-red-700 px-3 py-1.5 rounded-lg transition">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(clients)}">
+                    <td colspan="7" class="px-5 py-12 text-center text-neutral-600 text-sm">No clients yet. Add your first client.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- Add Client Modal -->
+<div id="addModal" class="modal" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="card p-8 w-full max-w-lg mx-4">
+        <h2 class="text-white font-semibold text-lg mb-6">Add New Client</h2>
+        <form action="/clients/add" method="post">
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Client Name</label>
+                    <input type="text" name="name" class="input-field w-full rounded-lg px-4 py-2.5 text-sm" placeholder="Acme Corp"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Project Name</label>
+                    <input type="text" name="projectName" class="input-field w-full rounded-lg px-4 py-2.5 text-sm" placeholder="Lead Gen Campaign"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Contact Email</label>
+                    <input type="email" name="contactEmail" class="input-field w-full rounded-lg px-4 py-2.5 text-sm" placeholder="contact@client.com"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Contact Phone</label>
+                    <input type="text" name="contactPhone" class="input-field w-full rounded-lg px-4 py-2.5 text-sm" placeholder="+91 98765 43210"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Monthly Fee (₹)</label>
+                    <input type="number" name="monthlyFee" class="input-field w-full rounded-lg px-4 py-2.5 text-sm" placeholder="50000"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Ad Budget (₹)</label>
+                    <input type="number" name="adBudget" class="input-field w-full rounded-lg px-4 py-2.5 text-sm" placeholder="100000"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Contract Start</label>
+                    <input type="date" name="contractStart" class="input-field w-full rounded-lg px-4 py-2.5 text-sm"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Contract End</label>
+                    <input type="date" name="contractEnd" class="input-field w-full rounded-lg px-4 py-2.5 text-sm"/>
+                </div>
+                <div class="col-span-2">
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Status</label>
+                    <select name="status" class="input-field w-full rounded-lg px-4 py-2.5 text-sm">
+                        <option value="ACTIVE">Active</option>
+                        <option value="PAUSED">Paused</option>
+                        <option value="COMPLETED">Completed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex gap-3 justify-end mt-6">
+                <button type="button" onclick="document.getElementById('addModal').classList.remove('open')"
+                        class="text-sm text-neutral-400 hover:text-white border border-neutral-700 px-4 py-2 rounded-lg transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-sm px-4 py-2 rounded-lg transition">
+                    Save Client
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Client Modal -->
+<div id="editModal" class="modal" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="card p-8 w-full max-w-lg mx-4">
+        <h2 class="text-white font-semibold text-lg mb-6">Edit Client</h2>
+        <form id="editForm" method="post">
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Client Name</label>
+                    <input type="text" id="edit-name" name="name" class="input-field w-full rounded-lg px-4 py-2.5 text-sm"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Project Name</label>
+                    <input type="text" id="edit-projectName" name="projectName" class="input-field w-full rounded-lg px-4 py-2.5 text-sm"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Contact Email</label>
+                    <input type="email" id="edit-contactEmail" name="contactEmail" class="input-field w-full rounded-lg px-4 py-2.5 text-sm"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Contact Phone</label>
+                    <input type="text" id="edit-contactPhone" name="contactPhone" class="input-field w-full rounded-lg px-4 py-2.5 text-sm"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Monthly Fee (₹)</label>
+                    <input type="number" id="edit-monthlyFee" name="monthlyFee" class="input-field w-full rounded-lg px-4 py-2.5 text-sm"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Ad Budget (₹)</label>
+                    <input type="number" id="edit-adBudget" name="adBudget" class="input-field w-full rounded-lg px-4 py-2.5 text-sm"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Contract Start</label>
+                    <input type="date" id="edit-contractStart" name="contractStart" class="input-field w-full rounded-lg px-4 py-2.5 text-sm"/>
+                </div>
+                <div>
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Contract End</label>
+                    <input type="date" id="edit-contractEnd" name="contractEnd" class="input-field w-full rounded-lg px-4 py-2.5 text-sm"/>
+                </div>
+                <div class="col-span-2">
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Status</label>
+                    <select id="edit-status" name="status" class="input-field w-full rounded-lg px-4 py-2.5 text-sm">
+                        <option value="ACTIVE">Active</option>
+                        <option value="PAUSED">Paused</option>
+                        <option value="COMPLETED">Completed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex gap-3 justify-end mt-6">
+                <button type="button" onclick="document.getElementById('editModal').classList.remove('open')"
+                        class="text-sm text-neutral-400 hover:text-white border border-neutral-700 px-4 py-2 rounded-lg transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-sm px-4 py-2 rounded-lg transition">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    function openEditModal(btn) {
+        const d = btn.dataset;
+        document.getElementById('editForm').action = '/clients/update/' + d.id;
+        document.getElementById('edit-name').value = d.name;
+        document.getElementById('edit-projectName').value = d.project;
+        document.getElementById('edit-contactEmail').value = d.email;
+        document.getElementById('edit-contactPhone').value = d.phone;
+        document.getElementById('edit-monthlyFee').value = d.fee;
+        document.getElementById('edit-adBudget').value = d.budget;
+        document.getElementById('edit-contractStart').value = d.start;
+        document.getElementById('edit-contractEnd').value = d.end;
+        document.getElementById('edit-status').value = d.status;
+        document.getElementById('editModal').classList.add('open');
+    }
+</script>
+</html>
