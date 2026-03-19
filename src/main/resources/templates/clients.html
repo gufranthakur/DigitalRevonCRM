@@ -28,18 +28,16 @@
         .input-field::placeholder { color: #404040; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 50; align-items: center; justify-content: center; }
         .modal.open { display: flex; }
+        .mono { font-family: 'DM Mono', monospace; }
     </style>
 </head>
 
 <body class="flex h-screen overflow-hidden text-white">
 
-<!-- Sidebar -->
 <div th:replace="~{fragments/layout :: sidebar}"></div>
 
-<!-- Main -->
 <div class="flex-1 flex flex-col overflow-hidden">
 
-    <!-- Topbar -->
     <header class="topbar flex items-center justify-between px-6 py-4">
         <div class="flex items-center gap-4">
             <button onclick="toggleSidebar()" class="text-neutral-500 hover:text-white transition">
@@ -53,7 +51,6 @@
         </div>
     </header>
 
-    <!-- Content -->
     <main class="flex-1 overflow-y-auto p-6">
 
         <div class="flex items-center justify-between mb-8">
@@ -67,7 +64,6 @@
             </button>
         </div>
 
-        <!-- Table -->
         <div class="card overflow-hidden">
             <table class="w-full">
                 <thead>
@@ -78,6 +74,7 @@
                     <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Ad Budget</th>
                     <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Status</th>
                     <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Contract End</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Meta Account</th>
                     <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Actions</th>
                 </tr>
                 </thead>
@@ -95,6 +92,12 @@
                         </span>
                     </td>
                     <td class="px-5 py-4 text-sm text-neutral-400" th:text="${client.contractEnd}"></td>
+                    <td class="px-5 py-4 text-sm mono">
+                        <span th:if="${client.metaAdAccountId != null and !#strings.isEmpty(client.metaAdAccountId)}"
+                              class="text-blue-400 text-xs" th:text="'act_' + ${client.metaAdAccountId}"></span>
+                        <span th:if="${client.metaAdAccountId == null or #strings.isEmpty(client.metaAdAccountId)}"
+                              class="text-neutral-700 text-xs">— not set</span>
+                    </td>
                     <td class="px-5 py-4 flex items-center gap-2">
                         <a th:href="@{/clients/{id}(id=${client.id})}"
                            class="text-xs text-neutral-400 hover:text-white border border-neutral-700 hover:border-neutral-500 px-3 py-1.5 rounded-lg transition">
@@ -111,6 +114,7 @@
                                 th:data-start="${client.contractStart}"
                                 th:data-end="${client.contractEnd}"
                                 th:data-status="${client.status}"
+                                th:data-metaadaccountid="${client.metaAdAccountId}"
                                 onclick="openEditModal(this)"
                                 class="text-xs text-blue-400 hover:text-blue-300 border border-blue-900 hover:border-blue-700 px-3 py-1.5 rounded-lg transition">
                             Edit
@@ -123,7 +127,7 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(clients)}">
-                    <td colspan="7" class="px-5 py-12 text-center text-neutral-600 text-sm">No clients yet. Add your first client.</td>
+                    <td colspan="8" class="px-5 py-12 text-center text-neutral-600 text-sm">No clients yet. Add your first client.</td>
                 </tr>
                 </tbody>
             </table>
@@ -133,7 +137,7 @@
 
 <!-- Add Client Modal -->
 <div id="addModal" class="modal" onclick="if(event.target===this)this.classList.remove('open')">
-    <div class="card p-8 w-full max-w-lg mx-4">
+    <div class="card p-8 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <h2 class="text-white font-semibold text-lg mb-6">Add New Client</h2>
         <form action="/clients/add" method="post">
             <div class="grid grid-cols-2 gap-4 mb-4">
@@ -177,6 +181,13 @@
                         <option value="COMPLETED">Completed</option>
                     </select>
                 </div>
+                <div class="col-span-2">
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Meta Ad Account ID</label>
+                    <input type="text" name="metaAdAccountId"
+                           class="input-field w-full rounded-lg px-4 py-2.5 text-sm mono"
+                           placeholder="e.g. 957863858097757 (without act_)"/>
+                    <p class="text-neutral-600 text-xs mt-1">Found in Meta Business Manager → Ad Accounts</p>
+                </div>
             </div>
             <div class="flex gap-3 justify-end mt-6">
                 <button type="button" onclick="document.getElementById('addModal').classList.remove('open')"
@@ -194,7 +205,7 @@
 
 <!-- Edit Client Modal -->
 <div id="editModal" class="modal" onclick="if(event.target===this)this.classList.remove('open')">
-    <div class="card p-8 w-full max-w-lg mx-4">
+    <div class="card p-8 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <h2 class="text-white font-semibold text-lg mb-6">Edit Client</h2>
         <form id="editForm" method="post">
             <div class="grid grid-cols-2 gap-4 mb-4">
@@ -238,6 +249,13 @@
                         <option value="COMPLETED">Completed</option>
                     </select>
                 </div>
+                <div class="col-span-2">
+                    <label class="text-neutral-500 text-xs uppercase tracking-wider block mb-2">Meta Ad Account ID</label>
+                    <input type="text" id="edit-metaAdAccountId" name="metaAdAccountId"
+                           class="input-field w-full rounded-lg px-4 py-2.5 text-sm mono"
+                           placeholder="e.g. 957863858097757 (without act_)"/>
+                    <p class="text-neutral-600 text-xs mt-1">Found in Meta Business Manager → Ad Accounts</p>
+                </div>
             </div>
             <div class="flex gap-3 justify-end mt-6">
                 <button type="button" onclick="document.getElementById('editModal').classList.remove('open')"
@@ -252,8 +270,6 @@
         </form>
     </div>
 </div>
-
-</body>
 
 <script>
     function toggleSidebar() {
@@ -272,7 +288,9 @@
         document.getElementById('edit-contractStart').value = d.start;
         document.getElementById('edit-contractEnd').value = d.end;
         document.getElementById('edit-status').value = d.status;
+        document.getElementById('edit-metaAdAccountId').value = d.metaadaccountid || '';
         document.getElementById('editModal').classList.add('open');
     }
 </script>
+</body>
 </html>

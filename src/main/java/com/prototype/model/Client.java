@@ -27,6 +27,9 @@ public class Client {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    // Meta Ads Integration
+    private String metaAdAccountId; // e.g. 957863858097757 (without act_ prefix)
+
     public enum Status {
         ACTIVE, PAUSED, COMPLETED
     }

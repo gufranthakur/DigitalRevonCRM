@@ -29,6 +29,11 @@
         .input-field { background: #0a0a0a; border: 1px solid #242424; color: #e5e5e5; transition: border-color 0.2s; }
         .input-field:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
         .input-field::placeholder { color: #404040; }
+        .table-row { border-bottom: 1px solid #1a1a1a; transition: background 0.15s; }
+        .table-row:hover { background: #161616; }
+        .mono { font-family: 'DM Mono', monospace; }
+        .alert-success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #10b981; }
+        .alert-error { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #f87171; }
     </style>
 </head>
 
@@ -55,17 +60,37 @@
 
     <main class="flex-1 overflow-y-auto p-6">
 
+        <!-- Flash messages -->
+        <div th:if="${syncSuccess}" class="alert-success rounded-xl px-4 py-3 mb-6 text-sm flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <span th:text="${syncSuccess}"></span>
+        </div>
+        <div th:if="${syncError}" class="alert-error rounded-xl px-4 py-3 mb-6 text-sm flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span th:text="${syncError}"></span>
+        </div>
+
         <!-- Header -->
         <div class="flex items-start justify-between mb-8">
             <div>
                 <h1 class="text-white text-2xl font-semibold tracking-tight" th:text="${client.name}"></h1>
                 <p class="text-neutral-500 text-sm mt-1" th:text="${client.projectName}"></p>
             </div>
-            <span th:classappend="${client.status == T(com.prototype.model.Client.Status).ACTIVE} ? 'badge-active' :
+            <div class="flex items-center gap-3">
+                <!-- Meta Sync Button -->
+                <form th:action="@{/clients/{id}/sync-meta(id=${client.id})}" method="post" th:if="${client.metaAdAccountId != null and !#strings.isEmpty(client.metaAdAccountId)}">
+                    <button type="submit"
+                            class="flex items-center gap-2 text-sm border border-blue-800 text-blue-400 hover:text-blue-300 hover:border-blue-600 px-4 py-2 rounded-lg transition">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        Sync Meta Ads
+                    </button>
+                </form>
+                <span th:classappend="${client.status == T(com.prototype.model.Client.Status).ACTIVE} ? 'badge-active' :
                                       (${client.status == T(com.prototype.model.Client.Status).PAUSED} ? 'badge-paused' : 'badge-completed')"
-                  class="text-xs font-medium px-3 py-1.5 rounded-full"
-                  th:text="${client.status}">
-            </span>
+                      class="text-xs font-medium px-3 py-1.5 rounded-full"
+                      th:text="${client.status}">
+                </span>
+            </div>
         </div>
 
         <div class="grid grid-cols-3 gap-4">
@@ -106,6 +131,12 @@
                         <p class="field-label">Ad Budget</p>
                         <p class="field-value" th:text="'₹' + ${client.adBudget}"></p>
                     </div>
+                    <div>
+                        <p class="field-label">Meta Ad Account ID</p>
+                        <p class="field-value mono text-blue-400"
+                           th:text="${client.metaAdAccountId != null and !#strings.isEmpty(client.metaAdAccountId)} ? 'act_' + ${client.metaAdAccountId} : '— not set'">
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -125,6 +156,54 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- Meta Ads Campaigns Section -->
+        <div class="card mt-4 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-5 border-b border-neutral-800">
+                <div>
+                    <h2 class="text-white font-medium">Meta Ad Campaigns</h2>
+                    <p class="text-neutral-600 text-xs mt-0.5">Last 30 days · synced from Meta Ads Manager</p>
+                </div>
+                <form th:action="@{/clients/{id}/sync-meta(id=${client.id})}" method="post"
+                      th:if="${client.metaAdAccountId != null and !#strings.isEmpty(client.metaAdAccountId)}">
+                    <button type="submit"
+                            class="text-xs text-blue-400 hover:text-blue-300 border border-blue-900 hover:border-blue-700 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        Sync Now
+                    </button>
+                </form>
+                <p th:if="${client.metaAdAccountId == null or #strings.isEmpty(client.metaAdAccountId)}"
+                   class="text-xs text-neutral-600">Set a Meta Ad Account ID in client settings to enable sync</p>
+            </div>
+            <table class="w-full" th:if="${not #lists.isEmpty(campaigns)}">
+                <thead>
+                <tr class="border-b border-neutral-800">
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Campaign</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Ad Spend</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Impressions</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Clicks</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Leads</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">CPL</th>
+                    <th class="text-left text-xs text-neutral-500 uppercase tracking-wider px-5 py-4">Period</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="campaign : ${campaigns}" class="table-row">
+                    <td class="px-5 py-4 text-sm text-white" th:text="${campaign.name}"></td>
+                    <td class="px-5 py-4 text-sm text-neutral-300 mono" th:text="${campaign.adSpend != null} ? '₹' + ${#numbers.formatDecimal(campaign.adSpend, 1, 2)} : '—'"></td>
+                    <td class="px-5 py-4 text-sm text-neutral-400" th:text="${campaign.impressions != null} ? ${#numbers.formatInteger(campaign.impressions, 1, 'COMMA')} : '—'"></td>
+                    <td class="px-5 py-4 text-sm text-neutral-400" th:text="${campaign.clicks != null} ? ${#numbers.formatInteger(campaign.clicks, 1, 'COMMA')} : '—'"></td>
+                    <td class="px-5 py-4 text-sm text-emerald-400 font-medium" th:text="${campaign.leadsGenerated != null} ? ${campaign.leadsGenerated} : '—'"></td>
+                    <td class="px-5 py-4 text-sm text-neutral-300 mono" th:text="${campaign.cpl != null and campaign.cpl > 0} ? '₹' + ${#numbers.formatDecimal(campaign.cpl, 1, 2)} : '—'"></td>
+                    <td class="px-5 py-4 text-sm text-neutral-500"
+                        th:text="${campaign.startDate != null} ? ${campaign.startDate} + ' → ' + ${campaign.endDate} : '—'"></td>
+                </tr>
+                </tbody>
+            </table>
+            <div th:if="${#lists.isEmpty(campaigns)}" class="px-6 py-10 text-center text-neutral-600 text-sm">
+                No campaigns yet. Click "Sync Now" to pull data from Meta Ads Manager.
+            </div>
         </div>
 
         <!-- Notes Section -->
@@ -191,11 +270,10 @@
     </main>
 </div>
 
-</body>
-
 <script>
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('collapsed');
     }
 </script>
+</body>
 </html>

@@ -18,9 +18,15 @@ public class Campaign {
     private Double adSpend;
     private Integer leadsGenerated;
     private Double cpl;
+    private Long impressions;
+    private Long clicks;
 
     private LocalDate startDate;
     private LocalDate endDate;
+
+    // Used to match campaigns on re-sync — prevents duplicates
+    @Column(unique = true)
+    private String metaCampaignId;
 
     @ManyToOne
     @JoinColumn(name = "client_id")

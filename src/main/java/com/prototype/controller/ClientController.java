@@ -1,6 +1,7 @@
 package com.prototype.controller;
 
 import com.prototype.model.Client;
+import com.prototype.repository.CampaignRepository;
 import com.prototype.repository.NoteRepository;
 import com.prototype.service.ClientService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,9 @@ public class ClientController {
 
     @Autowired
     private NoteRepository noteRepository;
+
+    @Autowired
+    private CampaignRepository campaignRepository;
 
     @GetMapping
     public String clients(Model model) {
@@ -36,6 +40,7 @@ public class ClientController {
         Client client = clientService.getById(id);
         model.addAttribute("client", client);
         model.addAttribute("notes", noteRepository.findByClient(client));
+        model.addAttribute("campaigns", campaignRepository.findByClient(client));
         return "client-detail";
     }
 
